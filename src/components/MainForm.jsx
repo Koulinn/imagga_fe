@@ -3,7 +3,7 @@ import { Button } from "bootstrap";
 import React, { useState } from "react";
 import { Form } from "react-bootstrap";
 
-import utils from "./utils";
+import utils from "../utils/index";
 
 const {
   HEADERS,
@@ -36,8 +36,6 @@ function MainForm({ setTags }) {
 
       const data = await res.json();
       setTags(data?.result?.tags || []);
-
-      console.log(res.body);
     } catch (error) {
       console.log(error);
     }
