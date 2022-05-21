@@ -3,18 +3,12 @@ import { Button } from "bootstrap";
 import React, { useState } from "react";
 import { Form } from "react-bootstrap";
 
-const {
-  REACT_APP_IMAGGA_API_KEY,
-  REACT_APP_IMAGGA_API_SECRET,
-  REACT_APP_IMAGGA_AUTH,
-  REACT_APP_IMAGGA_API,
-} = process.env;
+import utils from "./utils";
 
-const getTagsFromUrl = (imageUrl) => {
-  return (
-    `${REACT_APP_IMAGGA_API}/v2/tags?image_url=` + encodeURIComponent(imageUrl)
-  );
-};
+const {
+  HEADERS,
+  URLs: { getTagsFromUrl, upload, getTagsByID },
+} = utils;
 
 function MainForm({ setTags }) {
   const [img_url, setImg_url] = useState("");
@@ -36,11 +30,12 @@ function MainForm({ setTags }) {
 
       const res = await fetch(url, {
         headers: {
-          apiKey: REACT_APP_IMAGGA_API_KEY,
-          apiSecret: REACT_APP_IMAGGA_API_SECRET,
-          Authorization: `Basic ${REACT_APP_IMAGGA_AUTH}`,
+          ...HEADERS,
         },
       });
+
+      const data = await res.json();
+      setTags(data?.result?.tags || []);
 
       console.log(res.body);
     } catch (error) {
@@ -60,12 +55,9 @@ function MainForm({ setTags }) {
   const getTagsByUpload = async (e) => {
     e.preventDefault();
     try {
-      const url = `${REACT_APP_IMAGGA_API}/v2/uploads`;
-      const res = await fetch(url, {
+      const res = await fetch(upload, {
         headers: {
-          apiKey: REACT_APP_IMAGGA_API_KEY,
-          apiSecret: REACT_APP_IMAGGA_API_SECRET,
-          Authorization: `Basic ${REACT_APP_IMAGGA_AUTH}`,
+          ...HEADERS,
         },
         method: "post",
         body: formData,
@@ -75,19 +67,14 @@ function MainForm({ setTags }) {
       const img_id = data?.result?.upload_id;
 
       if (img_id) {
-        const response = await fetch(
-          `${REACT_APP_IMAGGA_API}/v2/tags?image_upload_id=${img_id}`,
-          {
-            headers: {
-              apiKey: REACT_APP_IMAGGA_API_KEY,
-              apiSecret: REACT_APP_IMAGGA_API_SECRET,
-              Authorization: `Basic ${REACT_APP_IMAGGA_AUTH}`,
-            },
-          }
-        );
+        const response = await fetch(getTagsByID(img_id), {
+          headers: {
+            ...HEADERS,
+          },
+        });
         const data = await response.json();
 
-        setTags(data.result.tags || []);
+        setTags(data?.result?.tags || []);
       }
     } catch (error) {
       console.log(error);
@@ -115,7 +102,12 @@ function MainForm({ setTags }) {
             </button>
           </div>
         </div>
-        <div className="d-flex align-items-end">
+        {img_url && (
+          <div style={{ marginTop: "16px" }}>
+            <img src={img_url} style={{ width: "360px", objectFit: "cover" }} />
+          </div>
+        )}
+        <div className="d-flex align-items-end mt-5">
           <div>
             <Form.Label>Upload image</Form.Label>
             <Form.Control
